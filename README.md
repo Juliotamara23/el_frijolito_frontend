@@ -1,90 +1,54 @@
-## [Devias Kit - React](https://material-kit-react.devias.io/)
+# <h1 align="center">Frontend del sistema de nomina El Frijolito</h1>
 
-![license](https://img.shields.io/badge/license-MIT-blue.svg)
+![El frijolito](public/assets/Home.png)
 
-[![Devias Kit - React](https://github.com/devias-io/material-kit-react/blob/main/public/assets/thumbnail.png)](https://material-kit-react.devias.io/)
+---
 
-> Free React Admin Dashboard made with [MUI's](https://mui.com) components, [React](https://reactjs.org) and of course [Next.js](https://github.com/vercel/next.js) to boost your app development process!
+![Estado del proyecto](https://img.shields.io/badge/Estado-En%20desarrollo-yellow)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
 
-## Pages 
+---
 
-- [Dashboard](https://material-kit-react.devias.io)
-- [Customers](https://material-kit-react.devias.io/dashboard/customers)
-- [Integrations](https://material-kit-react.devias.io/dashboard/integrations)
-- [Settings](https://material-kit-react.devias.io/dashboard/settings)
-- [Account](https://material-kit-react.devias.io/dashboard/account)
-- [Sign In](https://material-kit-react.devias.io/auth/sign-in)
-- [Sign Up](https://material-kit-react.devias.io/auth/sign-up)
-- [Reset Password](https://material-kit-react.devias.io/auth/reset-password)
+## Índice  
 
-## Free Figma Community File
+* [Título e imagen de portada](#Backend-del-sistema-de-nomina-El-Frijolito)
+* [Índice](#índice)  
+* [Descripción del proyecto](#descripción-del-proyecto)  
+* [Estado del proyecto](#estado-del-proyecto)  
+* [Características de la aplicación](#características-de-la-aplicación-y-demostración)
+* [Agradecimiento](#Agradecimiento)
 
-- [Duplicate File](https://www.figma.com/file/b3L1Np4RYiicZAOMopHNkm/Devias-Dashboard-Design-Library-Kit)
+---
 
-## Upgrade to PRO Version
+## Descripción del proyecto  
+El frontend del sistema de nómina del restaurante **El frijolito** está diseñado para gestionar de manera eficiente y precisa todos los aspectos relacionados con la nómina de los empleados.
 
-We also have a pro version of this product which bundles even more pages and components if you want
-to save more time and design efforts :)
+El objetivo principal del proyecto es proporcionar una solución robusta y escalable que facilite la administración de la nómina, garantizando precisión en los cálculos y facilidad de uso para los administradores del sistema.
 
-| Free Version (this one)  | [Devias Kit Pro](https://mui.com/store/items/devias-kit-pro/)                |
-| ------------------------ | :--------------------------------------------------------------------------- |
-| **8** Pages              | **80+** Pages                                                                |
-| ✔ Custom Authentication  | ✔ Authentication with **Amplify**, **Auth0**, **Firebase** and **Supabase**  |
-| -                        | ✔ Vite Version                                                               |
-| -                        | ✔ Dark Mode Support                                                          |
-| -                        | ✔ Complete Users Flows                                                       |
-| -                        | ✔ Premium Technical Support                                                  |
+---
 
-## Quick start
+## Estado del proyecto  
+El proyecto se encuentra en fase de desarrollo.
 
-- Clone the repo: `git clone https://github.com/devias-io/material-kit-react.git`
-- Make sure your Node.js and npm versions are up to date
-- Install dependencies: `npm install` or `yarn`
-- Start the server: `npm run dev` or `yarn dev`
-- Open browser: `http://localhost:3000`
+---
 
-## File Structure
+## Características de la aplicación  
+1. **Registro de empleados:**  
+    - Permite al administrador realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar) sobre los empleados de la organización.  
 
-Within the download you'll find the following directories and files:
+2. **Cálculo de nómina:**  
+    - Facilita al administrador el cálculo preciso de la nómina de los empleados.  
 
-```
-┌── .editorconfig
-├── .eslintrc.js
-├── .gitignore
-├── CHANGELOG.md
-├── LICENSE.md
-├── next-env.d.ts
-├── next.config.js
-├── package.json
-├── README.md
-├── tsconfig.json
-├── public
-└── src
-	├── components
-	├── contexts
-	├── hooks
-	├── lib
-	├── styles
-	├── types
-	└── app
-		├── layout.tsx
-		├── page.tsx
-		├── auth
-		└── dashboard
-```
+3. **Reporte de nómina:**  
+    - Proporciona la visualización de reportes detallados de las nóminas por empleado.  
 
-## Resources
+4. **Configuración de pagos:**  
+    - Permite configurar los porcentajes de pago según el tipo de hora y actualizar los valores por hora estándar según el año vigente.
 
-- More freebies like this one: https://devias.io
+---
 
-## Reporting Issues:
-
-- [Github Issues Page](https://github.com/devias-io/material-kit-react/issues)
-
-## License
-
-- Licensed under [MIT](https://github.com/devias-io/material-kit-react/blob/main/LICENSE.md)
-
-## Contact Us
-
-- Email Us: support@deviasio.zendesk.com
+## Agradecimiento
+Agradecimientos especiales a [Devias Kit](https://material-kit-react.devias.io/) - React autor del Admin Dashboard

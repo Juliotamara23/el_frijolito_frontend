@@ -5,52 +5,70 @@ export interface Selection<T = string> {
   deselectOne: (key: T) => void;
   selectAll: () => void;
   selectOne: (key: T) => void;
-  selected: Set<T>;
   selectedAny: boolean;
   selectedAll: boolean;
 }
 
-// IMPORTANT: To prevent infinite loop, `keys` argument must be memoized with React.useMemo hook.
-export function useSelection<T = string>(keys: T[] = []): Selection<T> {
-  const [selected, setSelected] = React.useState<Set<T>>(new Set());
+interface UseSelectionProps<T> {
+  keys: T[];
+  selected?: Set<T>;
+  onSelectedChange?: (selected: Set<T>) => void;
+}
 
-  React.useEffect(() => {
-    setSelected(new Set());
-  }, [keys]);
+export function useSelection<T = string>({ 
+  keys = [], 
+  selected: externalSelected,
+  onSelectedChange 
+}: UseSelectionProps<T>): Selection<T> {
+  const [internalSelected, setInternalSelected] = React.useState<Set<T>>(new Set());
+
+  const selected = externalSelected ?? internalSelected;
 
   const handleDeselectAll = React.useCallback(() => {
-    setSelected(new Set());
-  }, []);
+    if (onSelectedChange) {
+      onSelectedChange(new Set());
+    } else {
+      setInternalSelected(new Set());
+    }
+  }, [onSelectedChange]);
 
   const handleDeselectOne = React.useCallback((key: T) => {
-    setSelected((prev) => {
-      const copy = new Set(prev);
-      copy.delete(key);
-      return copy;
-    });
-  }, []);
+    const newSelected = new Set(selected);
+    newSelected.delete(key);
+    if (onSelectedChange) {
+      onSelectedChange(newSelected);
+    } else {
+      setInternalSelected(newSelected);
+    }
+  }, [onSelectedChange, selected]);
 
   const handleSelectAll = React.useCallback(() => {
-    setSelected(new Set(keys));
-  }, [keys]);
+    const newSelected = new Set(keys);
+    if (onSelectedChange) {
+      onSelectedChange(newSelected);
+    } else {
+      setInternalSelected(newSelected);
+    }
+  }, [keys, onSelectedChange]);
 
   const handleSelectOne = React.useCallback((key: T) => {
-    setSelected((prev) => {
-      const copy = new Set(prev);
-      copy.add(key);
-      return copy;
-    });
-  }, []);
+    const newSelected = new Set(selected);
+    newSelected.add(key);
+    if (onSelectedChange) {
+      onSelectedChange(newSelected);
+    } else {
+      setInternalSelected(newSelected);
+    }
+  }, [onSelectedChange, selected]);
 
   const selectedAny = selected.size > 0;
-  const selectedAll = selected.size === keys.length;
+  const selectedAll = keys.length > 0 && selected.size === keys.length;
 
   return {
     deselectAll: handleDeselectAll,
     deselectOne: handleDeselectOne,
     selectAll: handleSelectAll,
     selectOne: handleSelectOne,
-    selected,
     selectedAny,
     selectedAll,
   };

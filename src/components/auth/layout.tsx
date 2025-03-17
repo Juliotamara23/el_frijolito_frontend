@@ -5,7 +5,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { paths } from '@/paths';
-import { DynamicLogo } from '@/components/core/logo';
+// import { DynamicLogo } from '@/components/core/logo';
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -24,7 +24,7 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
       <Box sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column' }}>
         <Box sx={{ p: 3 }}>
           <Box component={RouterLink} href={paths.home} sx={{ display: 'inline-block', fontSize: 0 }}>
-            <DynamicLogo colorDark="light" colorLight="dark" height={32} width={122} />
+            {/* <DynamicLogo colorDark="light" colorLight="dark" height={32} width={122} /> */}
           </Box>
         </Box>
         <Box sx={{ alignItems: 'center', display: 'flex', flex: '1 1 auto', justifyContent: 'center', p: 3 }}>
@@ -34,7 +34,7 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
       <Box
         sx={{
           alignItems: 'center',
-          background: 'radial-gradient(50% 50% at 50% 50%, #122647 0%, #090E23 100%)',
+          background: 'radial-gradient(50% 50% at 50% 50%,rgb(82, 42, 2) 0%,rgb(172, 147, 115) 100%)', // Marrón más oscuro y beige medio
           color: 'var(--mui-palette-common-white)',
           display: { xs: 'none', lg: 'flex' },
           justifyContent: 'center',
@@ -43,14 +43,22 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
       >
         <Stack spacing={3}>
           <Stack spacing={1}>
-            <Typography color="inherit" sx={{ fontSize: '24px', lineHeight: '32px', textAlign: 'center' }} variant="h1">
-              Welcome to{' '}
-              <Box component="span" sx={{ color: '#15b79e' }}>
-                Devias Kit
+            <Typography
+              color="#FFD700"
+              sx={{ fontSize: '24px', lineHeight: '32px', textAlign: 'center', fontWeight: 'bold' }}
+              variant="h1"
+            >
+              Bienvenido a{' '}
+              <Box component="span" sx={{ color: '#FFA500', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>
+                sistema de nomina
               </Box>
             </Typography>
-            <Typography align="center" variant="subtitle1">
-              A professional template that comes with ready-to-use MUI components.
+            <Typography
+              align="center"
+              variant="subtitle1"
+              sx={{ color: '#EEE8AA', fontWeight: '600', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
+            >
+              El frijolito
             </Typography>
           </Stack>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>

@@ -3,8 +3,10 @@ export const paths = {
   auth: { signIn: '/auth/sign-in', signUp: '/auth/sign-up', resetPassword: '/auth/reset-password' },
   dashboard: {
     overview: '/dashboard',
-    account: '/dashboard/account',
-    customers: '/dashboard/customers',
+    newNomina: '/dashboard/nominas/newNomina',
+    newEmpleado: '/dashboard/empleados/newEmpleado',
+    empleados: '/dashboard/empleados',
+    nominas: '/dashboard/nominas',
     integrations: '/dashboard/integrations',
     settings: '/dashboard/settings',
   },
