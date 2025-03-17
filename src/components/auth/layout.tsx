@@ -53,13 +53,6 @@ export function Layout({ children }: LayoutProps): React.JSX.Element {
                 sistema de nomina
               </Box>
             </Typography>
-            <Typography
-              align="center"
-              variant="subtitle1"
-              sx={{ color: '#EEE8AA', fontWeight: '600', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}
-            >
-              El frijolito
-            </Typography>
           </Stack>
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
             <Box
