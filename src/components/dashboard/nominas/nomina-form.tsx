@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
@@ -18,6 +18,7 @@ import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -32,7 +33,7 @@ import { useNomina } from '@/hooks/use-reporte-nomina';
 import { NominaResultModal } from '@/components/modal/nomina-result-modal';
 
 export function NominaForm(): React.JSX.Element {
-  const { empleados } = useEmpleados();
+  const { empleados, isLoading: empleadosIsLoading, error: empleadosError, fetchEmpleados, setError } = useEmpleados();
   const [_empleado, setEmpleado] = useState<Empleado | null>(null);
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   const [fechaFin, setFechaFin] = useState<Date | null>(null);
@@ -48,6 +49,19 @@ export function NominaForm(): React.JSX.Element {
   const [isSuccess, setIsSuccess] = useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [alertMessage, setAlertMessage] = React.useState('');
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        await fetchEmpleados();
+      } catch (fetchError) {
+        setError("Error fetching empleados"); // Usar setError para mostrar el error
+      }
+    }
+    fetchData().catch(() => {
+      setError("Error en fetchData"); // Usar setError para mostrar el error
+    });
+  }, [fetchEmpleados, setError]);
 
   const resetForm = (): void => {
     setEmpleado(null);
@@ -188,35 +202,47 @@ export function NominaForm(): React.JSX.Element {
             <Grid container spacing={3}>
               {/* Empleado Select */}
               <Grid xs={12} md={6}>
-                <Autocomplete
-                  options={empleados}
-                  getOptionLabel={(option: Empleado) => `${option.cedula} - ${option.nombres} ${option.apellidos}`}
-                  onChange={(_, newValue) => {
-                    setEmpleado(newValue);
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Empleado"
-                      placeholder="Buscar por cédula, nombre o apellido"
-                      fullWidth
-                    />
-                  )}
-                  renderOption={(props, option) => (
-                    <li {...props}>
-                      {option.cedula} - {option.nombres} {option.apellidos} - {option.puesto_trabajo}
-                    </li>
-                  )}
-                  filterOptions={(options, { inputValue }) => {
-                    const searchTerm = inputValue.toLowerCase();
-                    return options.filter(
-                      (option) =>
-                        option.cedula.toString().includes(searchTerm) ||
-                        option.nombres.toLowerCase().includes(searchTerm) ||
-                        option.apellidos.toLowerCase().includes(searchTerm)
-                    );
-                  }}
-                />
+                {empleadosIsLoading ? ( // Mostrar un indicador de carga
+                  <Typography>Cargando empleados...</Typography>
+                ) : empleadosError ? ( // Mostrar un mensaje de error
+                  <Typography color="error">{empleadosError}</Typography>
+                ) : empleados.length > 0 ? (
+                  <Autocomplete
+                    options={empleados}
+                    getOptionLabel={(option: Empleado) => `${option.cedula} - ${option.nombres} ${option.apellidos}`}
+                    onChange={(_, newValue) => {
+                      if (newValue) {
+                        setEmpleado(newValue);
+                      } else {
+                        setEmpleado(null);
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Empleado"
+                        placeholder="Buscar por cédula, nombre o apellido"
+                        fullWidth
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props}>
+                        {option.cedula} - {option.nombres} {option.apellidos} - {option.puesto_trabajo}
+                      </li>
+                    )}
+                    filterOptions={(options, { inputValue }) => {
+                      const searchTerm = inputValue.toLowerCase();
+                      return options.filter(
+                        (option) =>
+                          option.cedula.toString().includes(searchTerm) ||
+                          option.nombres.toLowerCase().includes(searchTerm) ||
+                          option.apellidos.toLowerCase().includes(searchTerm)
+                      );
+                    }}
+                  />
+                ) : (
+                  <Typography variant="body2">No hay empleados registrados</Typography>
+                )}
               </Grid>
 
               {/* Fecha Inicio */}
@@ -290,8 +316,20 @@ export function NominaForm(): React.JSX.Element {
               </Grid>
             </Grid>
           </CardContent>
-          <Snackbar open={alertOpen} autoHideDuration={6000} onClose={() => { setAlertOpen(false); }}>
-            <Alert onClose={() => { setAlertOpen(false); }} severity="error" sx={{ width: '100%' }}>
+          <Snackbar
+            open={alertOpen}
+            autoHideDuration={6000}
+            onClose={() => {
+              setAlertOpen(false);
+            }}
+          >
+            <Alert
+              onClose={() => {
+                setAlertOpen(false);
+              }}
+              severity="error"
+              sx={{ width: '100%' }}
+            >
               {alertMessage}
             </Alert>
           </Snackbar>
