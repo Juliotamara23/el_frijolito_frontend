@@ -7,6 +7,8 @@ export const paths = {
     newEmpleado: '/dashboard/empleados/newEmpleado',
     empleados: '/dashboard/empleados',
     nominas: '/dashboard/nominas',
+    updateNomina: '/dashboard/nominas/updateNomina',
+    updateEmpleado: '/dashboard/empleados/updateEmpleado',
     confguraciones: '/dashboard/configuraciones',
   },
   errors: { notFound: '/errors/not-found' },

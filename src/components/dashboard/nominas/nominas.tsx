@@ -42,14 +42,14 @@ function NominaRow({
 }): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
     }).format(amount);
   };
 
-  const formatNumberWithCommas = (numberString: string) => {
+  const formatNumberWithCommas = (numberString: string): string => {
     // Eliminar caracteres no numéricos y puntos decimales
     const number = parseFloat(numberString.replace(/[^0-9.]/g, ''));
     if (isNaN(number)) {
@@ -139,7 +139,7 @@ function NominaRow({
                 </TableHead>
                 <TableBody>
                   {recargos.map((recargo, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={`${row.id}-${recargo.tipo}-${recargo.dias}`}>
                       {index === 0 && (
                         <>
                           <TableCell sx={{ whiteSpace: 'pre-wrap' }} rowSpan={recargos.length}>
