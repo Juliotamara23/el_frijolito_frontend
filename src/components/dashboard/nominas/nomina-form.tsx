@@ -51,15 +51,15 @@ export function NominaForm(): React.JSX.Element {
   const [alertMessage, setAlertMessage] = React.useState('');
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchData(): Promise<void> {
       try {
         await fetchEmpleados();
       } catch (fetchError) {
-        setError("Error fetching empleados"); // Usar setError para mostrar el error
+        setError("Error fetching empleados");
       }
     }
     fetchData().catch(() => {
-      setError("Error en fetchData"); // Usar setError para mostrar el error
+      setError("Error en fetchData");
     });
   }, [fetchEmpleados, setError]);
 

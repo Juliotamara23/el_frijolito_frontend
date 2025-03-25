@@ -12,7 +12,6 @@ interface NominaResultModalProps {
   onClose: () => void;
   isSuccess: boolean;
   errorMessage?: string;
-  onReset: () => void;
 }
 
 export function NominaResultModal({
@@ -23,40 +22,31 @@ export function NominaResultModal({
 }: NominaResultModalProps): React.JSX.Element {
   const router = useRouter();
 
-  const handleVerNominas = (): void => {
+  const handleVolverNominas = (): void => {
     router.push('/dashboard/nominas');
-    onClose();
-  };
-
-  const handleCancelarNomina = (): void => {
     onClose();
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {isSuccess ? 'Nómina Actualizada Exitosamente' : 'Error al Calcular Nómina'}
+        {isSuccess ? 'Nómina Actualizada Exitosamente' : 'Error al Actualizar Nómina'}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
           {isSuccess
-            ? 'La nómina ha sido re calculada y guardada correctamente.'
+            ? 'La nómina ha sido actualizada correctamente.'
             : `Error: ${errorMessage}`}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         {isSuccess ? (
-          <>
-            <Button onClick={handleCancelarNomina} color="primary">
-              Cancelar
-            </Button>
-            <Button onClick={handleVerNominas} variant="contained">
-              Ver Nóminas
-            </Button>
-          </>
+          <Button onClick={handleVolverNominas} variant="contained">
+            Volver a Nóminas
+          </Button>
         ) : (
           <Button onClick={onClose} color="primary">
-            OK
+            Cerrar
           </Button>
         )}
       </DialogActions>

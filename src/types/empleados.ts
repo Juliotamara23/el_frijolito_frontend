@@ -5,5 +5,5 @@ export interface Empleado {
     apellidos: string;
     telefono: string;
     puesto_trabajo: string;
-    salario_base: number;
+    salario_base?: number;
   }

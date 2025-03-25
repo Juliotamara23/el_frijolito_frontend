@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
@@ -25,15 +26,17 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 
-import { type Empleado } from '@/types/empleados';
-import { type QuincenaValorCreate, type ReporteNominaCreate } from '@/types/reporte-nominas';
-import { tiposRecargos } from '@/types/tipos-recargos';
-import { useEmpleados } from '@/hooks/use-empleados';
-import { useNomina } from '@/hooks/use-reporte-nomina';
-import { NominaResultModal } from '@/components/modal/nomina-result-modal';
+import { useEmpleados } from '../../../hooks/use-empleados';
+import { useNominas } from '../../../hooks/use-nomina';
+import { type Empleado } from '../../../types/empleados';
+import { type QuincenaValorCreate, type ReporteNominaCreate } from '../../../types/reporte-nominas';
+import { tiposRecargos } from '../../../types/tipos-recargos';
+import { NominaResultModal } from '../../modal/nomina-update-modal';
 
-export function NominaForm(): React.JSX.Element {
-  const { empleados, isLoading: empleadosIsLoading, error: empleadosError, fetchEmpleados, setError } = useEmpleados();
+export function NominaUpdateForm(): React.JSX.Element {
+  const params = useParams();
+  const nominaId = params.id as string;
+  const { empleados, isLoading: empleadosIsLoading, error: empleadosError } = useEmpleados();
   const [_empleado, setEmpleado] = useState<Empleado | null>(null);
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   const [fechaFin, setFechaFin] = useState<Date | null>(null);
@@ -43,7 +46,7 @@ export function NominaForm(): React.JSX.Element {
   const [selectedRecargos, setSelectedRecargos] = useState<number[]>([]);
   const [selectedDescuentos, _setSelectedDescuentos] = useState<number[]>([1, 2]); // IDs fijos para salud y pensión
   const [_selectedSubsidios, setSelectedSubsidios] = useState<number[]>([]);
-  const { createNomina, isLoading, error } = useNomina();
+  const { getNominaById, updateNomina, isLoading, error } = useNominas();
   const errorMessage = error as Error | string | null;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -51,28 +54,63 @@ export function NominaForm(): React.JSX.Element {
   const [alertMessage, setAlertMessage] = React.useState('');
 
   useEffect(() => {
-    async function fetchData(): Promise<void> {
+    const loadNomina = async (): Promise<void> => {
       try {
-        await fetchEmpleados();
-      } catch (fetchError) {
-        setError("Error fetching empleados");
+        const nomina = await getNominaById(nominaId);
+        if (nomina) {
+          // Establecer empleado
+          const empleadoData: Empleado = {
+            id: nomina.empleado_id,
+            cedula: nomina.cedula,
+            nombres: nomina.nombres,
+            apellidos: nomina.apellidos,
+            telefono: nomina.telefono,
+            puesto_trabajo: nomina.puesto_trabajo,
+          };
+          setEmpleado(empleadoData);
+  
+          // Establecer fechas
+          setFechaInicio(new Date(nomina.fecha_inicio));
+          setFechaFin(new Date(nomina.fecha_fin));
+  
+          // Extraer y establecer subsidios del string
+          const subsidiosAplicados = nomina.subsidios_aplicados || '';
+          setTieneSubsidio(subsidiosAplicados.toLowerCase().includes('transporte'));
+  
+          // Extraer y establecer recargos y valores del string combinado
+          const recargosYValores = nomina.recargos_y_valores || '';
+          const recargosArray: QuincenaValorCreate[] = [];
+          const recargoIds: number[] = [];
+  
+          // Parsear el string de recargos_y_valores
+          recargosYValores.split(';').forEach(recargo => {
+            const [tipo, dias, valor] = recargo.split(':');
+            if (tipo && dias && valor) {
+              const tipoRecargo = tiposRecargos.find(t => t.tipo_hora === tipo);
+              if (tipoRecargo) {
+                recargosArray.push({
+                  tipo_recargo_id: tipoRecargo.id,
+                  cantidad_dias: parseInt(dias),
+                  valor_quincena: parseFloat(valor)
+                });
+                recargoIds.push(tipoRecargo.id);
+              }
+            }
+          });
+  
+          setQuincenaValores(recargosArray);
+          setSelectedRecargos(recargoIds);
+        }
+      } catch (err: unknown) {
+        const loadingError = err instanceof Error ? err.message : 'Error al cargar la nómina';
+        setFormError(loadingError);
+        setAlertMessage(loadingError);
+        setAlertOpen(true);
       }
-    }
-    fetchData().catch(() => {
-      setError("Error en fetchData");
-    });
-  }, [fetchEmpleados, setError]);
-
-  const resetForm = (): void => {
-    setEmpleado(null);
-    setFechaInicio(null);
-    setFechaFin(null);
-    setFormError(null);
-    setTieneSubsidio(false);
-    setQuincenaValores([]);
-    setSelectedRecargos([]);
-    setSelectedSubsidios([]);
-  };
+    };
+  
+    void loadNomina();
+  }, [nominaId, getNominaById]);
 
   const handleFechaInicioChange = (date: dayjs.Dayjs | null): void => {
     if (date) {
@@ -161,13 +199,8 @@ export function NominaForm(): React.JSX.Element {
         throw new Error('Datos del formulario incompletos');
       }
 
-      const nominaData: ReporteNominaCreate = {
+      const nominaData: Partial<ReporteNominaCreate> = {
         empleado_id: _empleado.id.toString(),
-        cedula: _empleado.cedula.toString(),
-        nombres: _empleado.nombres,
-        apellidos: _empleado.apellidos,
-        telefono: _empleado.telefono,
-        puesto_trabajo: _empleado.puesto_trabajo,
         fecha_inicio: dayjs(fechaInicio).format('YYYY-MM-DD'),
         fecha_fin: dayjs(fechaFin).format('YYYY-MM-DD'),
         quincena_valores: quincenaValores.map((valor) => ({
@@ -179,14 +212,15 @@ export function NominaForm(): React.JSX.Element {
         subsidios: tieneSubsidio ? [1] : [],
       };
 
-      const result = await createNomina(nominaData);
-      if (result) {
+      const success = await updateNomina(nominaId, nominaData);
+
+      if (success) {
         setFormError(null);
         setIsSuccess(true);
         setIsModalOpen(true);
       }
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Error al enviar el formulario');
+      setFormError(err instanceof Error ? err.message : 'Error al actualizar la nómina');
       setIsSuccess(false);
       setIsModalOpen(true);
     }
@@ -209,6 +243,7 @@ export function NominaForm(): React.JSX.Element {
                 ) : empleados.length > 0 ? (
                   <Autocomplete
                     options={empleados}
+                    value={_empleado} // Agregar esta línea
                     getOptionLabel={(option: Empleado) => `${option.cedula} - ${option.nombres} ${option.apellidos}`}
                     onChange={(_, newValue) => {
                       if (newValue) {
@@ -217,9 +252,9 @@ export function NominaForm(): React.JSX.Element {
                         setEmpleado(null);
                       }
                     }}
-                    renderInput={(params) => (
+                    renderInput={(inputProps) => (
                       <TextField
-                        {...params}
+                        {...inputProps}
                         label="Empleado"
                         placeholder="Buscar por cédula, nombre o apellido"
                         fullWidth
@@ -278,6 +313,7 @@ export function NominaForm(): React.JSX.Element {
                   <TextField
                     label={recargo.tipo_hora}
                     type="number"
+                    value={quincenaValores.find((v) => v.tipo_recargo_id === recargo.id)?.cantidad_dias || ''}
                     InputProps={{ inputProps: { min: 0, max: 31 } }}
                     onChange={(e) => {
                       const value = e.target.value === '' ? 0 : parseInt(e.target.value);
@@ -304,6 +340,7 @@ export function NominaForm(): React.JSX.Element {
                 <FormControl fullWidth>
                   <InputLabel>Subsidios</InputLabel>
                   <Select
+                    value={tieneSubsidio.toString()} // Agregar esta línea
                     onChange={(e: SelectChangeEvent) => {
                       handleSubsidioChange(e);
                     }}
@@ -347,7 +384,6 @@ export function NominaForm(): React.JSX.Element {
         }}
         isSuccess={isSuccess}
         errorMessage={formError || errorMessage?.toString()}
-        onReset={resetForm}
       />
     </>
   );

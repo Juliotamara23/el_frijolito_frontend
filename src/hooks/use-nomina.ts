@@ -6,6 +6,7 @@ export const useNominas = (): {
   nominas: Nomina[];
   deleteNominas: (ids: string[]) => Promise<boolean>;
   updateNomina: (id: string, data: Partial<Nomina>) => Promise<boolean>;
+  getNominaById: (id: string) => Promise<Nomina | null>;
   isLoading: boolean;
   error: string | null;
   fetchNominas: () => Promise<void>;
@@ -22,6 +23,21 @@ export const useNominas = (): {
       setError('Error al obtener las nóminas');
     }
   }, []);
+
+  const getNominaById = async (id: string): Promise<Nomina | null> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get<Nomina>(`/nominas/${id}`);
+      return response.data;
+    } catch (err) {
+      setError('Error al obtener la nómina');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const updateNomina = async (id: string, data: Partial<Nomina>): Promise<boolean> => { 
     setIsLoading(true);
@@ -63,6 +79,7 @@ export const useNominas = (): {
     nominas, 
     deleteNominas,
     updateNomina,
+    getNominaById,
     isLoading, 
     error,
     fetchNominas,
