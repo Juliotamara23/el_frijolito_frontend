@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Temporarily log API errors for debugging during development */
 import { useState, useCallback } from 'react';
 import { api } from '../lib/api/nomina';
 import type { Nomina } from '@/types/nominas';
@@ -5,8 +6,6 @@ import type { Nomina } from '@/types/nominas';
 export const useNominas = (): {
   nominas: Nomina[];
   deleteNominas: (ids: string[]) => Promise<boolean>;
-  updateNomina: (id: string, data: Partial<Nomina>) => Promise<boolean>;
-  getNominaById: (id: string) => Promise<Nomina | null>;
   isLoading: boolean;
   error: string | null;
   fetchNominas: () => Promise<void>;
@@ -23,37 +22,6 @@ export const useNominas = (): {
       setError('Error al obtener las nóminas');
     }
   }, []);
-
-  const getNominaById = async (id: string): Promise<Nomina | null> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await api.get<Nomina>(`/nominas/${id}`);
-      return response.data;
-    } catch (err) {
-      setError('Error al obtener la nómina');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateNomina = async (id: string, data: Partial<Nomina>): Promise<boolean> => { 
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await api.put(`/nominas/${id}`, data);
-      await fetchNominas(); // Refresh list after update
-      return true;
-    } catch (err) {
-      setError('Error al actualizar la nómina');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };    
 
   const deleteNominas = async (ids: string[]): Promise<boolean> => {
     setIsLoading(true);
@@ -78,8 +46,6 @@ export const useNominas = (): {
   return { 
     nominas, 
     deleteNominas,
-    updateNomina,
-    getNominaById,
     isLoading, 
     error,
     fetchNominas,

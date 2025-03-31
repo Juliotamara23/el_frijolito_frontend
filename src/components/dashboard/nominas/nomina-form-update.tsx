@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Alert from '@mui/material/Alert';
-import Autocomplete from '@mui/material/Autocomplete';
+// import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
@@ -26,91 +26,115 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 
-import { useEmpleados } from '../../../hooks/use-empleados';
-import { useNominas } from '../../../hooks/use-nomina';
-import { type Empleado } from '../../../types/empleados';
-import { type QuincenaValorCreate, type ReporteNominaCreate } from '../../../types/reporte-nominas';
+import { useUpdateNomina } from '@/hooks/use-update-nomina';
+
+// import { useEmpleados } from '../../../hooks/use-empleados';
+import { useNominaById } from '../../../hooks/use-update-nomina-form';
+// import { type Empleado } from '../../../types/empleados';
+import { type QuincenaValorCreate, type ReporteNominaUpdate } from '../../../types/reporte-nominas';
 import { tiposRecargos } from '../../../types/tipos-recargos';
 import { NominaResultModal } from '../../modal/nomina-update-modal';
 
 export function NominaUpdateForm(): React.JSX.Element {
   const params = useParams();
   const nominaId = params.id as string;
-  const { empleados, isLoading: empleadosIsLoading, error: empleadosError } = useEmpleados();
-  const [_empleado, setEmpleado] = useState<Empleado | null>(null);
+  // const { empleados, isLoading: empleadosIsLoading, error: empleadosError } = useEmpleados();
+  const { getNominaById, isLoading: _nominaIsLoading, nomina } = useNominaById();
+  const { updateNomina, isLoading: _isUpdating, error } = useUpdateNomina();
+
+  const [empleado, setEmpleado] = useState<{
+    id: string;
+    cedula: string;
+    nombres: string;
+    apellidos: string;
+  } | null>(null);
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   const [fechaFin, setFechaFin] = useState<Date | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [tieneSubsidio, setTieneSubsidio] = useState<boolean>(false);
   const [quincenaValores, setQuincenaValores] = useState<QuincenaValorCreate[]>([]);
   const [selectedRecargos, setSelectedRecargos] = useState<number[]>([]);
-  const [selectedDescuentos, _setSelectedDescuentos] = useState<number[]>([1, 2]); // IDs fijos para salud y pensión
+  const [selectedDescuentos, _setSelectedDescuentos] = useState<number[]>([1, 2]);
   const [_selectedSubsidios, setSelectedSubsidios] = useState<number[]>([]);
-  const { getNominaById, updateNomina, isLoading, error } = useNominas();
-  const errorMessage = error as Error | string | null;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [alertMessage, setAlertMessage] = React.useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Primer useEffect - Solo para cargar datos iniciales
   useEffect(() => {
-    const loadNomina = async (): Promise<void> => {
+    const loadData = async (): Promise<void> => {
       try {
-        const nomina = await getNominaById(nominaId);
-        if (nomina) {
-          // Establecer empleado
-          const empleadoData: Empleado = {
-            id: nomina.empleado_id,
-            cedula: nomina.cedula,
-            nombres: nomina.nombres,
-            apellidos: nomina.apellidos,
-            telefono: nomina.telefono,
-            puesto_trabajo: nomina.puesto_trabajo,
-          };
-          setEmpleado(empleadoData);
-  
-          // Establecer fechas
-          setFechaInicio(new Date(nomina.fecha_inicio));
-          setFechaFin(new Date(nomina.fecha_fin));
-  
-          // Extraer y establecer subsidios del string
-          const subsidiosAplicados = nomina.subsidios_aplicados || '';
-          setTieneSubsidio(subsidiosAplicados.toLowerCase().includes('transporte'));
-  
-          // Extraer y establecer recargos y valores del string combinado
-          const recargosYValores = nomina.recargos_y_valores || '';
-          const recargosArray: QuincenaValorCreate[] = [];
-          const recargoIds: number[] = [];
-  
-          // Parsear el string de recargos_y_valores
-          recargosYValores.split(';').forEach(recargo => {
-            const [tipo, dias, valor] = recargo.split(':');
-            if (tipo && dias && valor) {
-              const tipoRecargo = tiposRecargos.find(t => t.tipo_hora === tipo);
-              if (tipoRecargo) {
-                recargosArray.push({
-                  tipo_recargo_id: tipoRecargo.id,
-                  cantidad_dias: parseInt(dias),
-                  valor_quincena: parseFloat(valor)
-                });
-                recargoIds.push(tipoRecargo.id);
-              }
-            }
-          });
-  
-          setQuincenaValores(recargosArray);
-          setSelectedRecargos(recargoIds);
-        }
-      } catch (err: unknown) {
-        const loadingError = err instanceof Error ? err.message : 'Error al cargar la nómina';
-        setFormError(loadingError);
-        setAlertMessage(loadingError);
-        setAlertOpen(true);
+        setIsLoading(true);
+        await getNominaById(nominaId);
+      } catch (err) {
+        setFormError(err instanceof Error ? err.message : 'Error al cargar la nómina');
+      } finally {
+        setIsLoading(false);
       }
     };
-  
-    void loadNomina();
-  }, [nominaId, getNominaById]);
+
+    void loadData();
+  }, [nominaId]);
+
+  // Segundo useEffect - Para procesar los datos una vez recibidos
+  useEffect(() => {
+    if (!nomina) {
+      return;
+    }
+
+    try {
+      // Establecer empleado
+      setEmpleado({
+        id: nomina.empleado_id,
+        cedula: nomina.cedula || '',
+        nombres: nomina.nombres || '',
+        apellidos: nomina.apellidos || '',
+      });
+
+      // Establecer fechas
+      if (nomina.fecha_inicio && nomina.fecha_fin) {
+        setFechaInicio(dayjs(nomina.fecha_inicio).toDate());
+        setFechaFin(dayjs(nomina.fecha_fin).toDate());
+      }
+
+      // Procesar recargos y valores de quincena
+      if (nomina.quincena_valores && Array.isArray(nomina.quincena_valores)) {
+        const valores = nomina.quincena_valores.map((valor) => ({
+          tipo_recargo_id: Number(valor.tipo_recargo_id),
+          cantidad_dias: Number(valor.cantidad_dias),
+          valor_quincena: Number(valor.valor_quincena),
+        }));
+
+        setQuincenaValores(valores);
+        setSelectedRecargos(valores.map((v) => v.tipo_recargo_id));
+      }
+
+      // Procesar subsidios
+      if (nomina?.subsidios) {
+        let subsidioArray: number[] = [];
+    
+        if (Array.isArray(nomina.subsidios)) {
+          subsidioArray = nomina.subsidios.map(Number);
+        } else if (typeof nomina.subsidios === 'string') {
+          subsidioArray = nomina.subsidios.split(',').map(Number);
+        } else if (typeof nomina.subsidios === 'number') {
+          subsidioArray = [nomina.subsidios];
+        }
+    
+        const hasSubsidio = subsidioArray.includes(1);
+    
+        setTieneSubsidio(hasSubsidio);
+        setSelectedSubsidios(hasSubsidio ? [1] : []);
+      } else {
+        setTieneSubsidio(false);
+        setSelectedSubsidios([]);
+      }
+    } catch (err) {
+      setFormError('Error al procesar los datos de la nómina');
+    }
+  }, [nomina]);
 
   const handleFechaInicioChange = (date: dayjs.Dayjs | null): void => {
     if (date) {
@@ -162,7 +186,7 @@ export function NominaUpdateForm(): React.JSX.Element {
 
   // Validación del formulario
   const validateForm = (): boolean => {
-    if (!_empleado) {
+    if (!empleado) {
       setAlertMessage('Debe seleccionar un empleado');
       setAlertOpen(true);
       return false;
@@ -195,12 +219,12 @@ export function NominaUpdateForm(): React.JSX.Element {
     }
 
     try {
-      if (!_empleado || !fechaInicio || !fechaFin) {
+      if (!empleado || !fechaInicio || !fechaFin) {
         throw new Error('Datos del formulario incompletos');
       }
 
-      const nominaData: Partial<ReporteNominaCreate> = {
-        empleado_id: _empleado.id.toString(),
+      const updateData: ReporteNominaUpdate = {
+        empleado_id: empleado.id.toString(),
         fecha_inicio: dayjs(fechaInicio).format('YYYY-MM-DD'),
         fecha_fin: dayjs(fechaFin).format('YYYY-MM-DD'),
         quincena_valores: quincenaValores.map((valor) => ({
@@ -212,15 +236,14 @@ export function NominaUpdateForm(): React.JSX.Element {
         subsidios: tieneSubsidio ? [1] : [],
       };
 
-      const success = await updateNomina(nominaId, nominaData);
-
-      if (success) {
+      const result = await updateNomina(nominaId, updateData);
+      if (result) {
         setFormError(null);
         setIsSuccess(true);
         setIsModalOpen(true);
       }
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Error al actualizar la nómina');
+      setFormError(err instanceof Error ? err.message : 'Error al actualizar el formulario');
       setIsSuccess(false);
       setIsModalOpen(true);
     }
@@ -228,162 +251,163 @@ export function NominaUpdateForm(): React.JSX.Element {
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
+      {isLoading ? (
         <Card>
-          <CardHeader title="Actualizar Nómina" />
-          <Divider />
           <CardContent>
-            <Grid container spacing={3}>
-              {/* Empleado Select */}
-              <Grid xs={12} md={6}>
-                {empleadosIsLoading ? ( // Mostrar un indicador de carga
-                  <Typography>Cargando empleados...</Typography>
-                ) : empleadosError ? ( // Mostrar un mensaje de error
-                  <Typography color="error">{empleadosError}</Typography>
-                ) : empleados.length > 0 ? (
-                  <Autocomplete
-                    options={empleados}
-                    value={_empleado} // Agregar esta línea
-                    getOptionLabel={(option: Empleado) => `${option.cedula} - ${option.nombres} ${option.apellidos}`}
-                    onChange={(_, newValue) => {
-                      if (newValue) {
-                        setEmpleado(newValue);
-                      } else {
-                        setEmpleado(null);
-                      }
-                    }}
-                    renderInput={(inputProps) => (
-                      <TextField
-                        {...inputProps}
-                        label="Empleado"
-                        placeholder="Buscar por cédula, nombre o apellido"
-                        fullWidth
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <li {...props}>
-                        {option.cedula} - {option.nombres} {option.apellidos} - {option.puesto_trabajo}
-                      </li>
-                    )}
-                    filterOptions={(options, { inputValue }) => {
-                      const searchTerm = inputValue.toLowerCase();
-                      return options.filter(
-                        (option) =>
-                          option.cedula.toString().includes(searchTerm) ||
-                          option.nombres.toLowerCase().includes(searchTerm) ||
-                          option.apellidos.toLowerCase().includes(searchTerm)
-                      );
-                    }}
-                  />
-                ) : (
-                  <Typography variant="body2">No hay empleados registrados</Typography>
-                )}
-              </Grid>
-
-              {/* Fecha Inicio */}
-              <Grid xs={12} md={3}>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Fecha Inicio"
-                    value={fechaInicio ? dayjs(fechaInicio) : null}
-                    onChange={handleFechaInicioChange}
-                    maxDate={fechaFin ? dayjs(fechaFin) : undefined}
-                  />
-                </LocalizationProvider>
-              </Grid>
-
-              {/* Fecha Fin */}
-              <Grid xs={12} md={3}>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    label="Fecha Fin"
-                    value={fechaFin ? dayjs(fechaFin) : null}
-                    onChange={(date) => {
-                      setFechaFin(date?.toDate() ?? null);
-                    }}
-                    minDate={fechaInicio ? dayjs(fechaInicio) : undefined}
-                    disabled={!fechaInicio}
-                  />
-                </LocalizationProvider>
-              </Grid>
-
-              {/* Tipos de Recargo */}
-              {tiposRecargos.map((recargo) => (
-                <Grid xs={12} md={6} key={recargo.id}>
+            <Typography>Cargando información de la nómina...</Typography>
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <Card>
+          <CardContent>
+            <Typography color="error">{error}</Typography>
+          </CardContent>
+        </Card>
+      ) : !nomina ? (
+        <Card>
+          <CardContent>
+            <Typography>No se encontraron datos de la nómina</Typography>
+          </CardContent>
+        </Card>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <Card>
+            <CardHeader title="Actualizar Nómina" />
+            <Divider />
+            <CardContent>
+              <Grid container spacing={3}>
+                {/* Empleado - Read only */}
+                <Grid xs={12} md={6}>
                   <TextField
-                    label={recargo.tipo_hora}
-                    type="number"
-                    value={quincenaValores.find((v) => v.tipo_recargo_id === recargo.id)?.cantidad_dias || ''}
-                    InputProps={{ inputProps: { min: 0, max: 31 } }}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : parseInt(e.target.value);
-                      handleRecargoChange(recargo.id, value);
-                    }}
+                    label="Empleado"
+                    value={empleado ? `${empleado.cedula} - ${empleado.nombres} ${empleado.apellidos}` : ''}
+                    disabled
                     fullWidth
+                    helperText="No se puede modificar el empleado"
                   />
                 </Grid>
-              ))}
+                {/* Fecha Inicio */}
+                <Grid xs={12} md={3}>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="Fecha Inicio"
+                      value={fechaInicio ? dayjs(fechaInicio) : null}
+                      onChange={handleFechaInicioChange}
+                      maxDate={fechaFin ? dayjs(fechaFin) : undefined}
+                    />
+                  </LocalizationProvider>
+                </Grid>
+                {/* Fecha Fin */}
+                <Grid xs={12} md={3}>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="Fecha Fin"
+                      value={fechaFin ? dayjs(fechaFin) : null}
+                      onChange={(date) => {
+                        setFechaFin(date?.toDate() ?? null);
+                      }}
+                      minDate={fechaInicio ? dayjs(fechaInicio) : undefined}
+                      disabled={!fechaInicio}
+                    />
+                  </LocalizationProvider>
+                </Grid>
+                {/* Tipos de Recargo */}
 
-              {/* Descuentos - Read only */}
-              <Grid xs={12} md={6}>
-                <TextField
-                  label="Descuentos"
-                  value="Salud y Pensión (Aplicados)"
-                  disabled
-                  fullWidth
-                  helperText={`IDs: ${selectedDescuentos.join(', ')}`}
-                />
-              </Grid>
+                {tiposRecargos.map((recargo) => {
+                  const valorActual = quincenaValores.find((v) => v.tipo_recargo_id === recargo.id);
 
-              {/* Subsidios */}
-              <Grid xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Subsidios</InputLabel>
-                  <Select
-                    value={tieneSubsidio.toString()} // Agregar esta línea
-                    onChange={(e: SelectChangeEvent) => {
-                      handleSubsidioChange(e);
-                    }}
-                  >
-                    <MenuItem value="true">Si</MenuItem>
-                    <MenuItem value="false">No</MenuItem>
-                  </Select>
-                  <FormHelperText>{tieneSubsidio ? 'Subsidio de transporte aplicado' : 'Sin subsidios'}</FormHelperText>
-                </FormControl>
+                  return (
+                    <Grid xs={12} md={6} key={recargo.id}>
+                      <TextField
+                        label={recargo.tipo_hora}
+                        type="number"
+                        // Cambiar el valor por defecto de 0 a una cadena vacía
+                        value={valorActual?.cantidad_dias ?? ''}
+                        InputProps={{
+                          inputProps: {
+                            min: 0,
+                            max: 31,
+                          },
+                        }}
+                        onChange={(e) => {
+                          const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                          if (value > 0) {
+                            handleRecargoChange(recargo.id, value);
+                          } else {
+                            // Si el valor es 0 o negativo, eliminar el recargo
+                            const updatedValores = quincenaValores.filter((v) => v.tipo_recargo_id !== recargo.id);
+                            setQuincenaValores(updatedValores);
+                            setSelectedRecargos(selectedRecargos.filter((id) => id !== recargo.id));
+                          }
+                        }}
+                        fullWidth
+                        helperText={
+                          valorActual ? `Valor actual: ${valorActual.cantidad_dias} días` : 'Sin horas registradas'
+                        }
+                      />
+                    </Grid>
+                  );
+                })}
+
+                {/* Descuentos - Read only */}
+                <Grid xs={12} md={6}>
+                  <TextField
+                    label="Descuentos"
+                    value="Salud y Pensión (Aplicados)"
+                    disabled
+                    fullWidth
+                    helperText={`IDs: ${selectedDescuentos.join(', ')}`}
+                  />
+                </Grid>
+
+                {/* Subsidios */}
+                <Grid xs={12} md={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Subsidios</InputLabel>
+                    <Select value={String(tieneSubsidio)} onChange={handleSubsidioChange}>
+                      <MenuItem value="true">Si</MenuItem>
+                      <MenuItem value="false">No</MenuItem>
+                    </Select>
+                    <FormHelperText>
+                      {tieneSubsidio ? 'Subsidio de transporte aplicado' : 'Sin subsidios'}
+                    </FormHelperText>
+                  </FormControl>
+                </Grid>
+                
               </Grid>
-            </Grid>
-          </CardContent>
-          <Snackbar
-            open={alertOpen}
-            autoHideDuration={6000}
-            onClose={() => {
-              setAlertOpen(false);
-            }}
-          >
-            <Alert
+            </CardContent>
+            <Snackbar
+              open={alertOpen}
+              autoHideDuration={6000}
               onClose={() => {
                 setAlertOpen(false);
               }}
-              severity="error"
-              sx={{ width: '100%' }}
             >
-              {alertMessage}
-            </Alert>
-          </Snackbar>
-          <CardActions sx={{ justifyContent: 'flex-end' }}>
-            <Button variant="contained" type="submit" disabled={isLoading || !_empleado || !fechaInicio || !fechaFin}>
-              {isLoading ? 'Recalculando...' : 'Actualizar Nómina'}
-            </Button>
-          </CardActions>
-        </Card>
-      </form>
+              <Alert
+                onClose={() => {
+                  setAlertOpen(false);
+                }}
+                severity="error"
+                sx={{ width: '100%' }}
+              >
+                {alertMessage}
+              </Alert>
+            </Snackbar>
+            <CardActions sx={{ justifyContent: 'flex-end' }}>
+              <Button variant="contained" type="submit" disabled={isLoading || !fechaInicio || !fechaFin}>
+                {isLoading ? 'Recalculando...' : 'Actualizar Nómina'}
+              </Button>
+            </CardActions>
+          </Card>
+        </form>
+      )}
       <NominaResultModal
         open={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
         }}
         isSuccess={isSuccess}
-        errorMessage={formError || errorMessage?.toString()}
+        errorMessage={formError || (error ? String(error) : undefined)}
       />
     </>
   );

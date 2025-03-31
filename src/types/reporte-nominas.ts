@@ -50,3 +50,14 @@ export interface ReporteNomina {
     id: string;  // UUID
     reporte_nomina_id: string;  // UUID
   }
+
+export interface ReporteNominaUpdate {
+  empleado_id?: string;
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  total_pagado?: number;
+  quincena_valores?: QuincenaValorCreate[];
+  recargos?: number[];
+  descuentos?: number[];
+  subsidios?: number[];
+}
